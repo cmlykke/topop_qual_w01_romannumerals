@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "20260127_quality_1st_RomanNumerals", "20260127_quality_1st_RomanNumerals\20260127_quality_1st_RomanNumerals.csproj", "{DEC2B31E-C003-4514-A175-6F1E92BE6184}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DEC2B31E-C003-4514-A175-6F1E92BE6184}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEC2B31E-C003-4514-A175-6F1E92BE6184}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEC2B31E-C003-4514-A175-6F1E92BE6184}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEC2B31E-C003-4514-A175-6F1E92BE6184}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
