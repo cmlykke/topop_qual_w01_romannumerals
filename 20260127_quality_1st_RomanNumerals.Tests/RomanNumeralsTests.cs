@@ -11,7 +11,7 @@ public class RomanNumeralsTests
     [InlineData("")]            // empty string (if you want to treat as invalid)
     [InlineData("V1")]          // digit
     [InlineData("1234567890")]  // only digits
-    [InlineData("hello")]       // lowercase letters
+    [InlineData("mcmxciv")]       // lowercase letters
     [InlineData("abcIVxyz")]    // mixed valid + lowercase
     [InlineData("XVHLM")]       // Illegal capital letter
     [InlineData("MCMXCIV!")]    // punctuation
