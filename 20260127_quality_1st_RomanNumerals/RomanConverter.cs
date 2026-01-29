@@ -4,13 +4,12 @@ using System.Linq;
 
 public static class RomanConverter
 {
-    private static HashSet<char> allowedCharacters = new HashSet<char> { 'I', 'V', 'X', 'L', 'C', 'D', 'M' };
     private static readonly Dictionary<char, int> romanToInt = new()
     {
         ['I'] = 1, ['V'] = 5, ['X'] = 10, ['L'] = 50, ['C'] = 100, ['D'] = 500, ['M'] = 1000
     };
 
-    private static int GetRomanOrThrow(char c)
+    private static int getRomanOrThrow(char c)
     {
         if (!romanToInt.TryGetValue(c, out var value))
             throw new ArgumentException("only I, V, X, L, C, D, M are allowed");
@@ -19,75 +18,69 @@ public static class RomanConverter
     
     public static int ToInteger(string roman)
     {
-        if (roman is null)
-            throw new ArgumentNullException(nameof(roman),
-                "null is not allowed as an input, only I, V, X, L, C, D, M are allowed");
-        if (roman is "")
-            throw new ArgumentException(nameof(roman),
-                "an empty string is not allowed");
-        return ToIntegerHelper(roman, new LinkedList<int>(), 0, roman);
+        if (roman is null) throw new ArgumentNullException(nameof(roman),
+            "null is not allowed as an input, only I, V, X, L, C, D, M are allowed");
+        if (roman is "") throw new ArgumentException(nameof(roman),
+            "an empty string is not allowed");
+        List<int> romanints = roman.Select(getRomanOrThrow).ToList();
+        return ToIntegerHelper(0, new List<int>(),  romanints, roman);
     }
-
-    private static int ToIntegerHelper(string roman, LinkedList<int> templist, int runningtotal, string originalRoman)
+    
+    private static int ToIntegerHelper(
+        int runningtotal,
+        List<int> unresolved,
+        List<int> romanints,
+        string originalRoman)
     {
-        if (roman.Length == 0 && templist.Count == 0)
+        return (runningtotal, unresolved, romanints) switch
         {
-            return runningtotal;
-        }
-
-        int headInt = GetRomanOrThrow(roman.First());
-        roman = roman.Substring(1);
-        
-        if (templist.Count == 0 && roman.Length == 0  && runningtotal + headInt > 3999)
-        {
-            throw new ArgumentException(nameof(originalRoman),
-                "Numeric value is above maximum allowed: 3999");
-        }
-        
-        //VLD_can_not_be_repeated_NegativeTests
-        if (templist.Count > 0 && templist.Last.Value == headInt && '5'== headInt.ToString().First())
-        {
-            throw new ArgumentException(nameof(originalRoman),
-                "Roman numerals V, L, and D can not be repeated");
-        }
-        //IXCM_can_be_repeated_3_times_NegativeTests
-        if (templist.Count > 2 && templist.Last.Value == headInt)
-        {
-            throw new ArgumentException(nameof(originalRoman),
-                "Roman numerals cannot repeat more than three times");
-        }
-        
-        //Smaller_value_precedes_larger_NegativeTests
-        if (templist.Count > 0 && templist.Last.Value < headInt && '5'== templist.Last.Value.ToString().First())
-        {
-            throw new ArgumentException(nameof(originalRoman),
-                "Invalid Roman numeral substraction");
-        }
-        //Smaller_value_precedes_larger_PositiveTests
-        if (templist.Count > 0 && templist.Last.Value < headInt)
-        {
-            int substract = headInt - templist.Sum();
-            return ToIntegerHelper(roman, 
-                new LinkedList<int>(), 
-                runningtotal + substract, originalRoman);
-        }
-        
-        if (roman.Length == 0) 
-            return runningtotal + headInt + templist.Sum();
-        
-        //Larger_value_precedes_smaller_PositiveTests
-        if (templist.Count > 0 && templist.Last.Value > headInt)
-        {
-            int running = runningtotal + templist.Sum();
-            return ToIntegerHelper(roman, 
-                new([headInt]), 
-                running, originalRoman);
-        }
-        
-        templist.AddLast(headInt);
-        return ToIntegerHelper(roman, 
-            templist,
-            runningtotal, originalRoman); 
+            // Largest_value_is_3999
+            (var runningVar, var unresVar, {Count: 0}) 
+                when runningVar + unresVar.Sum() > 3999 
+                => throw new ArgumentException(originalRoman,
+                    "Numeric value is above maximum allowed: 3999"),
+            
+            (_, _, {Count: 0}) 
+                => runningtotal + unresolved.Sum(),
+            
+            // IXCM_can_be_repeated_3_times:
+            (_, _, var romanTemp) 
+                when romanTemp.First().ToString().First() == '1' && 
+                     unresolved.Sum() / (double)romanTemp.First() == 3 
+                => throw new ArgumentException(originalRoman,
+                    "Roman numerals cannot repeat more than three times"),
+            
+            // VLD_can_not_be_repeated
+            (_, _, var romanTemp) 
+                when romanTemp.First().ToString().First() == '5' && 
+                     unresolved.Sum() / (double)romanTemp.First() == 1 
+                => throw new ArgumentException(originalRoman,
+                    "Roman numerals V, L, and D can not be repeated"),
+            
+            // Smaller_value_precedes_larger_Negative
+            (var runningVar, var unresVar, var romanVar)
+                when unresVar.Count > 0 && unresVar.First() < romanVar.First() 
+                                        && unresVar.First().ToString().First() == '5'
+                => throw new ArgumentException(originalRoman,
+                    "Invalid Roman numeral substraction"),
+            
+            // Smaller_value_precedes_larger_Positive
+            (var runningVar, var unresVar, var romanVar)
+                when unresVar.Count > 0 && unresVar.First() < romanVar.First() 
+                => ToIntegerHelper(runningVar + romanVar.First() - unresVar.Sum(),
+                    new List<int>(),  romanints.Skip(1).ToList(), originalRoman),
+            
+            // Larger_value_precedes_smaller
+            (var runningVar, var unresVar, var romanVar)
+                when unresVar.Count > 0 && unresVar.First() > romanVar.First()   
+                => ToIntegerHelper(runningVar + unresVar.Sum(),
+                    new List<int>(){romanVar.First()},  romanints.Skip(1).ToList(), originalRoman),
+            
+            _ => ToIntegerHelper(
+                runningtotal,
+                unresolved.Append(romanints.First()).ToList(),
+                romanints.Skip(1).ToList(),
+                originalRoman),
+        };
     }
-
 }

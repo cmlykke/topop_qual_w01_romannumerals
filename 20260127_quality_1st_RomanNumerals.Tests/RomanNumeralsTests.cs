@@ -8,7 +8,7 @@ public class RomanNumeralsTests
     //Non-roman input tests:
     
     [Theory]
-    [InlineData(null)]            // null check
+    [InlineData(null)]           
     public void Input_with_null_NegativeTest(string roman)
     {
         var ex = Assert.Throws<ArgumentNullException>(
@@ -36,7 +36,7 @@ public class RomanNumeralsTests
     [Theory]
     [InlineData("V1")]          // digit
     [InlineData("1234567890")]  // only digits
-    [InlineData("mcmxciv")]       // lowercase letters
+    [InlineData("mcmxciv")]     // lowercase letters
     [InlineData("abcIVxyz")]    // mixed valid + lowercase
     [InlineData("XVHLM")]       // Illegal capital letter
     [InlineData("MCMXCIV!")]    // punctuation
@@ -49,7 +49,6 @@ public class RomanNumeralsTests
             () => RomanConverter.ToInteger(roman)
         );
 
-        // Optional: make the assertion more specific
         Assert.Contains("only I, V, X, L, C, D, M are allowed", 
             ex.Message, 
             StringComparison.OrdinalIgnoreCase);
@@ -108,9 +107,9 @@ public class RomanNumeralsTests
     [InlineData("LC")]
     [InlineData("LM")]
     [InlineData("DM")]
+    [InlineData("IVX")]
     public void Smaller_value_precedes_larger_NegativeTests(string roman)
     {
-        // Act & Assert
         var exception = Assert.Throws<ArgumentException>(
             () => RomanConverter.ToInteger(roman)
         );
@@ -137,7 +136,6 @@ public class RomanNumeralsTests
     [InlineData("MMMMMMMMMM")]
     public void IXCM_can_be_repeated_3_times_NegativeTests(string roman)
     {
-        // Act & Assert
         var exception = Assert.Throws<ArgumentException>(
             () => RomanConverter.ToInteger(roman)
         );
@@ -151,9 +149,9 @@ public class RomanNumeralsTests
     [InlineData("DD")]
     [InlineData("VVVVVVVVVV")]
     [InlineData("DDDDDDDDDD")]
+    [InlineData("IVV")]
     public void VLD_can_not_be_repeated_NegativeTests(string roman)
     {
-        // Act & Assert
         var exception = Assert.Throws<ArgumentException>(
             () => RomanConverter.ToInteger(roman)
         );
@@ -172,8 +170,8 @@ public class RomanNumeralsTests
     
     [Theory]
     [InlineData("MMMCMXCIXI")]
-    //[InlineData("MMMCMXCIXIII")]
-    //[InlineData("MMMCMXCIXV")]
+    [InlineData("MMMCMXCIXIII")]
+    [InlineData("MMMCMXCIXV")]
     public void Largest_value_is_3999_NegativeTests(string roman)
     {
         // Act & Assert
@@ -184,6 +182,4 @@ public class RomanNumeralsTests
         Assert.Contains("Numeric value is above maximum allowed: 3999", 
             exception.Message, StringComparison.OrdinalIgnoreCase);
     }
-    
-    
 }
