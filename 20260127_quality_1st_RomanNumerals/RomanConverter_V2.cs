@@ -2,6 +2,24 @@
 
 using System.Linq;
 
+/*
+ 
+ Feedback - 2026-01-30 - Markus
+ 
+ Bare lige som feedback mens jeg lytter til AAI
+(Er ikke øvet i C# så tag det med et gram salt)
+
+Du kunne reducere kode og "Checks" rigtig meget 
+ved at samle dem der checker om .Count > 0 eller unresolved.First() < romanints.First() 
+(Idk hvor gode switch cases er i C#, i JS og Python ville man nok holde sig fra dem)
+
+I samme stil kunne du gemme romanints.First().ToString().First() i en variable, 
+reducerer runtime og kode
+
+Stor fan af rekursive function (´▽`ʃ♡ƪ) (selvom de er ueffektive af)
+ 
+ */
+
 public static class RomanConverter_V2
 {
     private static readonly Dictionary<char, int> romanToInt = new()
