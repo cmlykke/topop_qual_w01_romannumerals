@@ -5,6 +5,8 @@ using Xunit;
 public class RomanNumeralsTests
 {
  
+    private static Func<string, int> GenericRomanToInt = RomanConverter_V2.ToInteger;
+    
     //Non-roman input tests:
     
     [Theory]
@@ -12,7 +14,7 @@ public class RomanNumeralsTests
     public void Input_with_null_NegativeTest(string roman)
     {
         var ex = Assert.Throws<ArgumentNullException>(
-            () => RomanConverter.ToInteger(roman)
+            () => GenericRomanToInt(roman)
         );
 
         Assert.Contains("null is not allowed as an input, only I, V, X, L, C, D, M are allowed", 
@@ -25,7 +27,7 @@ public class RomanNumeralsTests
     public void Input_with_empty_NegativeTest(string roman)
     {
         var ex = Assert.Throws<ArgumentException>(
-            () => RomanConverter.ToInteger(roman)
+            () => GenericRomanToInt(roman)
         );
 
         Assert.Contains("an empty string is not allowed", 
@@ -46,7 +48,7 @@ public class RomanNumeralsTests
     public void Input_with_non_roman_characters_NegativeTests(string roman)
     {
         var ex = Assert.Throws<ArgumentException>(
-            () => RomanConverter.ToInteger(roman)
+            () => GenericRomanToInt(roman)
         );
 
         Assert.Contains("only I, V, X, L, C, D, M are allowed", 
@@ -66,7 +68,7 @@ public class RomanNumeralsTests
     [InlineData("M",   1000)]
     public void All_possible_Roman_Letters_PositiveTests(string roman, int expected)
     {
-        int result = RomanConverter.ToInteger(roman);
+        int result = GenericRomanToInt(roman);
         Assert.Equal(expected, result);
     }
     
@@ -84,7 +86,7 @@ public class RomanNumeralsTests
     [InlineData("MD",   1500)]
     public void Larger_value_precedes_smaller_PositiveTests(string roman, int expected)
     {
-        int result = RomanConverter.ToInteger(roman);
+        int result = GenericRomanToInt(roman);
         Assert.Equal(expected, result);
     }
     
@@ -97,7 +99,7 @@ public class RomanNumeralsTests
     [InlineData("CM",      900)]
     public void Smaller_value_precedes_larger_PositiveTests(string roman, int expected)
     {
-        int result = RomanConverter.ToInteger(roman);
+        int result = GenericRomanToInt(roman);
         Assert.Equal(expected, result);
     }
     
@@ -111,7 +113,7 @@ public class RomanNumeralsTests
     public void Smaller_value_precedes_larger_NegativeTests(string roman)
     {
         var exception = Assert.Throws<ArgumentException>(
-            () => RomanConverter.ToInteger(roman)
+            () => GenericRomanToInt(roman)
         );
 
         Assert.Contains("Invalid Roman numeral substraction", 
@@ -125,7 +127,7 @@ public class RomanNumeralsTests
     [InlineData("MMM",      3000)]
     public void IXCM_can_be_repeated_3_times_PositiveTests(string roman, int expected)
     {
-        int result = RomanConverter.ToInteger(roman);
+        int result = GenericRomanToInt(roman);
         Assert.Equal(expected, result);
     }
     
@@ -137,7 +139,7 @@ public class RomanNumeralsTests
     public void IXCM_can_be_repeated_3_times_NegativeTests(string roman)
     {
         var exception = Assert.Throws<ArgumentException>(
-            () => RomanConverter.ToInteger(roman)
+            () => GenericRomanToInt(roman)
         );
 
         Assert.Contains("Roman numerals cannot repeat more than three times", 
@@ -153,7 +155,7 @@ public class RomanNumeralsTests
     public void VLD_can_not_be_repeated_NegativeTests(string roman)
     {
         var exception = Assert.Throws<ArgumentException>(
-            () => RomanConverter.ToInteger(roman)
+            () => GenericRomanToInt(roman)
         );
 
         Assert.Contains("Roman numerals V, L, and D can not be repeated", 
@@ -164,7 +166,7 @@ public class RomanNumeralsTests
     [InlineData("MMMCMXCIX",      3999)]
     public void Largest_value_is_3999_PositiveTest(string roman, int expected)
     {
-        int result = RomanConverter.ToInteger(roman);
+        int result = GenericRomanToInt(roman);
         Assert.Equal(expected, result);
     }
     
@@ -176,7 +178,7 @@ public class RomanNumeralsTests
     {
         // Act & Assert
         var exception = Assert.Throws<ArgumentException>(
-            () => RomanConverter.ToInteger(roman)
+            () => GenericRomanToInt(roman)
         );
 
         Assert.Contains("Numeric value is above maximum allowed: 3999", 

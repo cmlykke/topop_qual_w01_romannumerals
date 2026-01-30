@@ -3,10 +3,11 @@
 
 using System;
 
-namespace _20260127_quality_1st_RomanNumerals; // ← make sure this matches your .csproj / namespace
+namespace _20260127_quality_1st_RomanNumerals;
 
 class Program
 {
+    private static Func<string, int> GenericRomanToInt = RomanConverter_V2.ToInteger;
     static void Main(string[] args)
     {
         Console.WriteLine("Roman Numeral → Integer Converter");
@@ -34,7 +35,7 @@ class Program
 
             try
             {
-                int number = RomanConverter.ToInteger(input);
+                int number = GenericRomanToInt(input);
                 Console.WriteLine($"{input.ToUpper()} → {number}\n");
             }
             catch (ArgumentException ex)
