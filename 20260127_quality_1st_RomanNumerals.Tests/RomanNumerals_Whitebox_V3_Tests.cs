@@ -7,10 +7,10 @@ using _20260127_quality_1st_RomanNumerals;
 
 
 // this class is for white-box structural testing
-public class RomanNumerals_Whitebox_Tests
+public class RomanNumerals_Whitebox_V3_Tests
 {
     
-    private static Func<string, int> GenericRomanToInt = RomanConverter_V4.ToInteger;
+    private static Func<string, int> GenericRomanToInt = RomanConverter_V3.ToInteger;
     private static int bruteForceGenerator_maxLength = 5;
     static readonly char[] bruteForceGeneratorAlphabet = { 'I', 'V', 'X', 'L', 'C', 'D', 'M' };
     
@@ -24,16 +24,16 @@ public class RomanNumerals_Whitebox_Tests
         var digits = new int?[] { null, 1, 5 };
 
         // Local predicate list mirroring ToIntegerHelper's switch arms
-        var preds = new List<(string name, Func<int,int?,int?,int,bool> pred, RomanConverter_V4.Decision decision)>
+        var preds = new List<(string name, Func<int,int?,int?,int,bool> pred, RomanConverter_V3.Decision decision)>
         {
-            ("End",               (rep,a,b,cmp) => a is int && b is null,                                      RomanConverter_V4.Decision.End),
-            ("FirstIter",         (rep,a,b,cmp) => a is null && b is int,                                      RomanConverter_V4.Decision.FirstIter),
-            ("LargerPrecedes",    (rep,a,b,cmp) => a is int && b is int && cmp > 0,                            RomanConverter_V4.Decision.LargerPrecedesSmaller),
-            ("AddRepeat",         (rep,a,b,cmp) => rep < 3 && a == 1 && b == 1 && cmp == 0,                    RomanConverter_V4.Decision.AddRepeat),
-            ("TooManyRepeats",    (rep,a,b,cmp) => rep >= 3 && a == 1 && b == 1 && cmp == 0,                   RomanConverter_V4.Decision.TooManyRepeats),
-            ("RepeatVLD",         (rep,a,b,cmp) => a == 5 && b == 5 && cmp == 0,                               RomanConverter_V4.Decision.RepeatVLD),
-            ("Subtract",          (rep,a,b,cmp) => a == 1 && b is int && cmp < 0,                              RomanConverter_V4.Decision.Subtract),
-            ("IllegalSubtract",   (rep,a,b,cmp) => a == 5 && b is int && cmp < 0,                              RomanConverter_V4.Decision.IllegalSubtract),
+            ("End",               (rep,a,b,cmp) => a is int && b is null,                                      RomanConverter_V3.Decision.End),
+            ("FirstIter",         (rep,a,b,cmp) => a is null && b is int,                                      RomanConverter_V3.Decision.FirstIter),
+            ("LargerPrecedes",    (rep,a,b,cmp) => a is int && b is int && cmp > 0,                            RomanConverter_V3.Decision.LargerPrecedesSmaller),
+            ("AddRepeat",         (rep,a,b,cmp) => rep < 3 && a == 1 && b == 1 && cmp == 0,                    RomanConverter_V3.Decision.AddRepeat),
+            ("TooManyRepeats",    (rep,a,b,cmp) => rep >= 3 && a == 1 && b == 1 && cmp == 0,                   RomanConverter_V3.Decision.TooManyRepeats),
+            ("RepeatVLD",         (rep,a,b,cmp) => a == 5 && b == 5 && cmp == 0,                               RomanConverter_V3.Decision.RepeatVLD),
+            ("Subtract",          (rep,a,b,cmp) => a == 1 && b is int && cmp < 0,                              RomanConverter_V3.Decision.Subtract),
+            ("IllegalSubtract",   (rep,a,b,cmp) => a == 5 && b is int && cmp < 0,                              RomanConverter_V3.Decision.IllegalSubtract),
         };
 
         // Generate a stable list of reachable tuples
@@ -56,7 +56,7 @@ public class RomanNumerals_Whitebox_Tests
         }
 
         // Canonical decisions via the implementation
-        var canonical = tuples.Select(t => (t, RomanConverter_V4.Decide(t.rep, t.a, t.b, t.cmp))).ToList();
+        var canonical = tuples.Select(t => (t, RomanConverter_V3.Decide(t.rep, t.a, t.b, t.cmp))).ToList();
 
         // Assert mutual exclusivity of mirrored predicates independent of Decide
         // For every reachable tuple, exactly one mirrored predicate must match.
@@ -76,7 +76,7 @@ public class RomanNumerals_Whitebox_Tests
             {
                 // Find the first matching predicate in this permutation
                 var first = permuted.FirstOrDefault(p => p.pred(t.rep, t.a, t.b, t.cmp));
-                var actual = first == default ? RomanConverter_V4.Decision.DefaultUnexpected : first.decision;
+                var actual = first == default ? RomanConverter_V3.Decision.DefaultUnexpected : first.decision;
 
                 // expected comes from Decide, which mirrors the helper. If multiple predicates
                 // overlapped and mapped to different decisions, different orders would change `actual`.
@@ -110,8 +110,8 @@ public class RomanNumerals_Whitebox_Tests
                     (a is int && b is null);       // end
                 if (!reachable) continue;
 
-                var decision = RomanConverter_V4.Decide(repetition, a, b, cmp);
-                if (decision == RomanConverter_V4.Decision.DefaultUnexpected)
+                var decision = RomanConverter_V3.Decide(repetition, a, b, cmp);
+                if (decision == RomanConverter_V3.Decision.DefaultUnexpected)
                 {
                     failures.Add($"Unclassified tuple a={a?.ToString() ?? "null"}, b={b?.ToString() ?? "null"}, cmp={cmp}, rep={repetition}");
                 }
