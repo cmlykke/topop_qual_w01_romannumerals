@@ -86,6 +86,18 @@ public class RomanConverter_V4
 
             case Decision.Subtract:
                 // Subtractive pair with head 1: compute difference and reset repetition
+                // Additional guard: the smaller must not be less than 10% of the larger
+                {
+                    var larger = romanpairs.First().Item2!.Value;
+                    var smaller = result[^1];
+                    // Use firstGreaterThanSecond (negative in subtract cases) as per requirement
+                    var subtractContext = firstGreaterThanSecond < 0;
+                    if (subtractContext && smaller < larger / 10.0)
+                    {
+                        throw new ArgumentException(originalRoman,
+                            "Invalid Roman numeral substraction: smaller is less than 10% of the larger value");
+                    }
+                }
                 return ToIntegerHelper(
                     [.. result[..^1], romanpairs.First().Item2!.Value - result[^1]],
                     romanpairs.Skip(1).ToList(), 1, originalRoman);

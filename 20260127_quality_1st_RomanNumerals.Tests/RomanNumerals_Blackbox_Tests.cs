@@ -59,9 +59,6 @@ public class RomanNumerals_Blackbox_Tests
     
     // input that breaks real-world roman numeral rules, regardless of the specification
     [Theory]
-    // substracting I from C is not illegal according to the specification, 
-    // but real roman numerals dont allow it
-    [InlineData("IC")]    
     // occilating strings like, IVIVIVIV is allowed by the specification,
     // but real roman numerals dont allow it
     [InlineData("XXXIVIVIVIVIV")]  
@@ -74,6 +71,19 @@ public class RomanNumerals_Blackbox_Tests
         Assert.Contains("Input allowed by specification, but not by real world roman numerals.", 
             ex.Message, 
             StringComparison.Ordinal);
+    }
+    
+    // New rule: for a subtractive pair, the smaller must not be less than 10% of the larger
+    [Theory]
+    [InlineData("IC")]   // 1 vs 100
+    [InlineData("IL")]   // 1 vs 50
+    [InlineData("IM")]   // 1 vs 1000
+    [InlineData("XD")]   // 10 vs 500
+    [InlineData("XM")]   // 10 vs 1000
+    public void Subtractive_too_great_gap_NegativeTests(string roman)
+    {
+        var exception = Assert.Throws<ArgumentException>(() => GenericRomanToInt(roman));
+        Assert.Contains("smaller is less than 10% of the larger value", exception.Message, StringComparison.Ordinal);
     }
     
     //Specification tests:
@@ -112,9 +122,7 @@ public class RomanNumerals_Blackbox_Tests
     
     [Theory]
     [InlineData("IV",      4)]
-    [InlineData("IM",    999)]
     [InlineData("XL",     40)]
-    [InlineData("XM",      990)]
     [InlineData("CD",     400)]
     [InlineData("CM",      900)]
     public void Smaller_value_precedes_larger_PositiveTests(string roman, int expected)
