@@ -40,13 +40,21 @@ public class RomanConverter_V4
         int repetition,
         string originalRoman)
     {
-        int? firstHeadDigit = romanpairs.First().Item1.HasValue ? 
-            int.Parse(romanpairs.First().Item1.Value.ToString().First().ToString()) : null;
-        int? secondHeadDigit = romanpairs.First().Item2.HasValue ? 
-            int.Parse(romanpairs.First().Item2.Value.ToString().First().ToString()) : null;
-        int firstGreaterThanSecond = (romanpairs.First().Item1 ?? 0) - (romanpairs.First().Item2 ?? 0);
+        // Cache head and tail once to simplify control flow
+        var (headA, headB) = romanpairs.First();
+        var tail = romanpairs.Skip(1).ToList();
+
+        // Compute head digits (first decimal digit) without string conversions
+        int? firstHeadDigit = headA.HasValue ? GetHeadDigit(headA.Value) : null;
+        int? secondHeadDigit = headB.HasValue ? GetHeadDigit(headB.Value) : null;
+
+        // Compare raw values (null treated as 0)
+        int firstGreaterThanSecond = (headA ?? 0) - (headB ?? 0);
+
+        // Verify result remains a sorted set in descending order
         var sortedUniqueDesc = result.Distinct().OrderByDescending(x => x).ToList();
         bool resultIsASortedSetDesc = result.SequenceEqual(sortedUniqueDesc);
+
         // Single source of truth: classify using Decide(...), then act on the decision
         var decision = Decide(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc);
 
@@ -59,20 +67,20 @@ public class RomanConverter_V4
             case Decision.FirstIter:
                 // First item is null - first iteration
                 return ToIntegerHelper(
-                    [.. result, romanpairs.First().Item2!.Value],
-                    romanpairs.Skip(1).ToList(), repetition + 1, originalRoman);
+                    [.. result, headB!.Value],
+                    tail, repetition + 1, originalRoman);
 
             case Decision.LargerPrecedesSmaller:
                 // Larger value precedes smaller: push current and reset repetition
                 return ToIntegerHelper(
-                    [.. result, romanpairs.First().Item2!.Value],
-                    romanpairs.Skip(1).ToList(), 1, originalRoman);
+                    [.. result, headB!.Value],
+                    tail, 1, originalRoman);
 
             case Decision.AddRepeat:
                 // Equal 1s under repeat limit: fold into last and increment repetition
                 return ToIntegerHelper(
-                    [.. result[..^1], romanpairs.First().Item2!.Value + result[^1]],
-                    romanpairs.Skip(1).ToList(), repetition + 1, originalRoman);
+                    [.. result[..^1], headB!.Value + result[^1]],
+                    tail, repetition + 1, originalRoman);
 
             case Decision.TooManyRepeats:
                 // More than three repeats of I/X/C/M are not allowed
@@ -88,7 +96,7 @@ public class RomanConverter_V4
                 // Subtractive pair with head 1: compute difference and reset repetition
                 // Additional guard: the smaller must not be less than 10% of the larger
                 {
-                    var larger = romanpairs.First().Item2!.Value;
+                    var larger = headB!.Value;
                     var smaller = result[^1];
                     // Use firstGreaterThanSecond (negative in subtract cases) as per requirement
                     var subtractContext = firstGreaterThanSecond < 0;
@@ -99,8 +107,8 @@ public class RomanConverter_V4
                     }
                 }
                 return ToIntegerHelper(
-                    [.. result[..^1], romanpairs.First().Item2!.Value - result[^1]],
-                    romanpairs.Skip(1).ToList(), 1, originalRoman);
+                    [.. result[..^1], headB!.Value - result[^1]],
+                    tail, 1, originalRoman);
 
             case Decision.IllegalSubtract:
                 // Illegal subtract (e.g., V before X)
@@ -122,6 +130,14 @@ public class RomanConverter_V4
                     $"b={secondHeadDigit?.ToString() ?? "null"}, " +
                     $"cmp={firstGreaterThanSecond}) while processing '{originalRoman}'");
         }
+    }
+
+    // Returns the most significant decimal digit of a positive integer (e.g., 987 -> 9)
+    private static int GetHeadDigit(int value)
+    {
+        while (value >= 10)
+            value /= 10;
+        return value;
     }
     
     // Internal decision surface for tests only
