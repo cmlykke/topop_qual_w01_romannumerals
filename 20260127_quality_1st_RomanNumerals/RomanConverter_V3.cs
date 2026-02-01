@@ -41,33 +41,33 @@ public class RomanConverter_V3
             int.Parse(romanpairs.First().Item1.Value.ToString().First().ToString()) : null;
         int? secondHeadDigit = romanpairs.First().Item2.HasValue ? 
             int.Parse(romanpairs.First().Item2.Value.ToString().First().ToString()) : null;
-        int secondGreaterThanFirst = (romanpairs.First().Item2 ?? 0) - (romanpairs.First().Item1 ?? 0);
+        int firstGreaterThanSecond = (romanpairs.First().Item1 ?? 0) - (romanpairs.First().Item2 ?? 0);
         
-        return (repetition, firstHeadDigit, secondHeadDigit, secondGreaterThanFirst) switch
+        return (repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond) switch
         {
-            // last item is null - recursion ends
+            // Last item is null - recursion ends
             ( _, int, null, _)
                 => result.Sum(),
             
-            // first item is null - first iteration
+            // First item is null - first iteration
             ( _, null, int, _) 
                 => ToIntegerHelper([..result, romanpairs.First().Item2.Value], 
                     romanpairs.Skip(1).ToList(), repetition + 1, originalRoman),
             
-            // if both tupple values are the same, increment the repetition counter
+            // Larger_value_precedes_smaller
+            ( _, int, int, > 0) => 
+                ToIntegerHelper(
+                    [.. result, romanpairs.First().Item2.Value],
+                    romanpairs.Skip(1).ToList(), 1, originalRoman),
+            
+            // If both tupple values are the same, increment the repetition counter
             ( < 3, 1, 1, 0) => 
                 ToIntegerHelper(
                     [.. result[..^1], romanpairs.First().Item2.Value + result[^1]], 
                     romanpairs.Skip(1).ToList(), repetition + 1, originalRoman),
             
-            // a smaller roman numeral found, = reset the repetition counter
-            ( _, int, int, < 0) => 
-                ToIntegerHelper(
-                    [.. result, romanpairs.First().Item2.Value],
-                    romanpairs.Skip(1).ToList(), 1, originalRoman),
-            
             // IXCM_can_be_repeated_3_times_NegativeTests
-            ( 3,1,1, 0)
+            ( >= 3,1,1, 0)
                 => throw new ArgumentException(originalRoman,
                     "Roman numerals cannot repeat more than three times"),
             
@@ -76,14 +76,14 @@ public class RomanConverter_V3
                 => throw new ArgumentException(originalRoman,
                     "Roman numerals V, L, and D can not be repeated"),
             
-            // smaller_value_precedes_larger (perform substraction)
-            (_, 1, int, > 0) => 
+            // Smaller_value_precedes_larger (perform substraction)
+            (_, 1, int, < 0) => 
                 ToIntegerHelper(
                     [.. result[..^1], romanpairs.First().Item2.Value - result[^1]],
                     romanpairs.Skip(1).ToList(), 1, originalRoman),
             
             // Smaller_value_precedes_larger_NegativeTests (illegal substraction)
-            (_, 5, 1, > 0)
+            (_, 5, int, < 0)
                 => throw new ArgumentException(originalRoman,
                     "Invalid Roman numeral substraction"),
             
