@@ -1,6 +1,16 @@
 ﻿namespace _20260127_quality_1st_RomanNumerals;
 
+using System;
 using System.Linq;
+
+// Thrown when an internal invariant (assumed unreachable code path) is violated.
+// Exposed as internal and visible to tests via InternalsVisibleTo.
+internal sealed class InternalInvariantViolationException : Exception
+{
+    public InternalInvariantViolationException() { }
+    public InternalInvariantViolationException(string? message) : base(message) { }
+    public InternalInvariantViolationException(string? message, Exception? innerException) : base(message, innerException) { }
+}
 
 public class RomanConverter_V3
 {
@@ -87,8 +97,12 @@ public class RomanConverter_V3
                 => throw new ArgumentException(originalRoman,
                     "Invalid Roman numeral substraction"),
             
-            _ => throw new ArgumentException(originalRoman,
-            "case should never be reached, please report this bug"),
+            _ => throw new InternalInvariantViolationException(
+                $"Default arm reached in ToIntegerHelper for tuple " +
+                $"(rep={repetition}, " +
+                $"a={firstHeadDigit?.ToString() ?? "null"}, " +
+                $"b={secondHeadDigit?.ToString() ?? "null"}, " +
+                $"cmp={firstGreaterThanSecond}) while processing '{originalRoman}'"),
         };
     }
     

@@ -58,6 +58,14 @@ public class RomanNumerals_Whitebox_Tests
         // Canonical decisions via the implementation
         var canonical = tuples.Select(t => (t, RomanConverter_V3.Decide(t.rep, t.a, t.b, t.cmp))).ToList();
 
+        // Assert mutual exclusivity of mirrored predicates independent of Decide
+        // For every reachable tuple, exactly one mirrored predicate must match.
+        foreach (var t in tuples)
+        {
+            int matches = preds.Count(p => p.pred(t.rep, t.a, t.b, t.cmp));
+            Assert.Equal(1, matches);
+        }
+
         // Check multiple random permutations of predicate order
         var rng = new Random(12345);
         for (int run = 0; run < 32; run++)
@@ -128,9 +136,10 @@ public class RomanNumerals_Whitebox_Tests
             {
                 _ = GenericRomanToInt(s);
             }
-            catch (ArgumentException ex) when (ex.Message.Contains("case should never be reached"))
+            catch (_20260127_quality_1st_RomanNumerals.InternalInvariantViolationException)
             {
-                Assert.Fail($"Default arm hit for input '{s}'");
+                // The default arm in the helper was reached — this is a test failure.
+                Assert.True(false, $"Default arm hit for input '{s}'");
             }
             catch (ArgumentException)
             {
