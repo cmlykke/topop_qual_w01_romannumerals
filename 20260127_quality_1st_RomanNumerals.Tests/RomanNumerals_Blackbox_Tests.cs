@@ -58,7 +58,6 @@ public class RomanNumerals_Blackbox_Tests
     }
     
     // input that breaks real-world roman numeral rules, regardless of the specification
-    /*
     [Theory]
     // substracting I from C is not illegal according to the specification, 
     // but real roman numerals dont allow it
@@ -76,7 +75,7 @@ public class RomanNumerals_Blackbox_Tests
             ex.Message, 
             StringComparison.Ordinal);
     }
-    */
+    
     //Specification tests:
     
     [Theory]

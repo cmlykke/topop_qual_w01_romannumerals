@@ -45,8 +45,10 @@ public class RomanConverter_V4
         int? secondHeadDigit = romanpairs.First().Item2.HasValue ? 
             int.Parse(romanpairs.First().Item2.Value.ToString().First().ToString()) : null;
         int firstGreaterThanSecond = (romanpairs.First().Item1 ?? 0) - (romanpairs.First().Item2 ?? 0);
+        var sortedUniqueDesc = result.Distinct().OrderByDescending(x => x).ToList();
+        bool resultIsASortedSetDesc = result.SequenceEqual(sortedUniqueDesc);
         // Single source of truth: classify using Decide(...), then act on the decision
-        var decision = Decide(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond);
+        var decision = Decide(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc);
 
         switch (decision)
         {
@@ -92,7 +94,13 @@ public class RomanConverter_V4
                 // Illegal subtract (e.g., V before X)
                 throw new ArgumentException(originalRoman,
                     "Invalid Roman numeral substraction");
-
+            
+            //If the result set has repetition or lower values before higher,
+            //then it is allowed by specification, but not by REAL roman numerals. 
+            case Decision.ResultNotSortedSet:
+                throw new ArgumentException(originalRoman,
+                    "Input allowed by specification, but not by real world roman numerals.");
+            
             default:
                 // DefaultUnexpected → our internal invariant
                 throw new InternalInvariantViolationException(
@@ -115,52 +123,57 @@ public class RomanConverter_V4
         RepeatVLD,
         Subtract,
         IllegalSubtract,
-        DefaultUnexpected
+        DefaultUnexpected,
+        ResultNotSortedSet
     }
 
     // Mirrors the predicates used by the ToIntegerHelper switch.
     // It does not perform any state mutation; it only classifies the current tuple.
     internal static class RomanV4Predicates
     {
-        internal static bool IsEnd              (int rep, int? a, int? b, int cmp) => a is int && b is null;
-        internal static bool IsFirstIter        (int rep, int? a, int? b, int cmp) => a is null && b is int;
-        internal static bool IsLargerPrecedesSmaller(int rep, int? a, int? b, int cmp) => a is int && b is int && cmp > 0;
-        internal static bool IsAddRepeat        (int rep, int? a, int? b, int cmp) => rep < 3  && a == 1 && b == 1 && cmp == 0;
-        internal static bool IsTooManyRepeats   (int rep, int? a, int? b, int cmp) => rep >= 3 && a == 1 && b == 1 && cmp == 0;
-        internal static bool IsRepeatVLD        (int rep, int? a, int? b, int cmp) => a == 5 && b == 5 && cmp == 0;
-        internal static bool IsSubtract         (int rep, int? a, int? b, int cmp) => a == 1 && b is int && cmp < 0;
-        internal static bool IsIllegalSubtract  (int rep, int? a, int? b, int cmp) => a == 5 && b is int && cmp < 0;
+        internal static bool IsEnd              (int rep, int? a, int? b, int cmp, bool resultSortedSet) => a is int && b is null && resultSortedSet;
+        internal static bool IsFirstIter        (int rep, int? a, int? b, int cmp, bool resultSortedSet) => a is null && b is int && resultSortedSet;
+        internal static bool IsLargerPrecedesSmaller(int rep, int? a, int? b, int cmp, bool resultSortedSet) => a is int && b is int && cmp > 0 && resultSortedSet;
+        internal static bool IsAddRepeat        (int rep, int? a, int? b, int cmp, bool resultSortedSet) => rep < 3  && a == 1 && b == 1 && cmp == 0 && resultSortedSet;
+        internal static bool IsTooManyRepeats   (int rep, int? a, int? b, int cmp, bool resultSortedSet) => rep >= 3 && a == 1 && b == 1 && cmp == 0 && resultSortedSet;
+        internal static bool IsRepeatVLD        (int rep, int? a, int? b, int cmp, bool resultSortedSet) => a == 5 && b == 5 && cmp == 0 && resultSortedSet;
+        internal static bool IsSubtract         (int rep, int? a, int? b, int cmp, bool resultSortedSet) => a == 1 && b is int && cmp < 0 && resultSortedSet;
+        internal static bool IsIllegalSubtract  (int rep, int? a, int? b, int cmp, bool resultSortedSet) => a == 5 && b is int && cmp < 0 && resultSortedSet;
+        internal static bool IsResultNotSortedSet (int rep, int? a, int? b, int cmp, bool resultSortedSet) => !resultSortedSet;
     }
 
     internal static Decision Decide(
         int repetition,
         int? firstHeadDigit,
         int? secondHeadDigit,
-        int firstGreaterThanSecond)
+        int firstGreaterThanSecond,
+        bool resultIsASortedSetDesc)
     {
         // DEBUG-only overlap guard: ensure mutual exclusivity of predicates
         #if DEBUG
         int matches = 0;
-        if (RomanV4Predicates.IsEnd(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
-        if (RomanV4Predicates.IsFirstIter(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
-        if (RomanV4Predicates.IsLargerPrecedesSmaller(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
-        if (RomanV4Predicates.IsAddRepeat(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
-        if (RomanV4Predicates.IsTooManyRepeats(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
-        if (RomanV4Predicates.IsRepeatVLD(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
-        if (RomanV4Predicates.IsSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
-        if (RomanV4Predicates.IsIllegalSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (RomanV4Predicates.IsEnd(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
+        if (RomanV4Predicates.IsFirstIter(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
+        if (RomanV4Predicates.IsLargerPrecedesSmaller(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
+        if (RomanV4Predicates.IsAddRepeat(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
+        if (RomanV4Predicates.IsTooManyRepeats(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
+        if (RomanV4Predicates.IsRepeatVLD(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
+        if (RomanV4Predicates.IsSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
+        if (RomanV4Predicates.IsIllegalSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
+        if (RomanV4Predicates.IsResultNotSortedSet(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) matches++;
         if (matches > 1)
             throw new InternalInvariantViolationException("Overlapping decision predicates detected");
         #endif
-
-        if (RomanV4Predicates.IsEnd(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.End;
-        if (RomanV4Predicates.IsFirstIter(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.FirstIter;
-        if (RomanV4Predicates.IsLargerPrecedesSmaller(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.LargerPrecedesSmaller;
-        if (RomanV4Predicates.IsAddRepeat(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.AddRepeat;
-        if (RomanV4Predicates.IsTooManyRepeats(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.TooManyRepeats;
-        if (RomanV4Predicates.IsRepeatVLD(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.RepeatVLD;
-        if (RomanV4Predicates.IsSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.Subtract;
-        if (RomanV4Predicates.IsIllegalSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.IllegalSubtract;
+        
+        if (RomanV4Predicates.IsEnd(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.End;
+        if (RomanV4Predicates.IsFirstIter(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.FirstIter;
+        if (RomanV4Predicates.IsLargerPrecedesSmaller(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.LargerPrecedesSmaller;
+        if (RomanV4Predicates.IsAddRepeat(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.AddRepeat;
+        if (RomanV4Predicates.IsTooManyRepeats(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.TooManyRepeats;
+        if (RomanV4Predicates.IsRepeatVLD(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.RepeatVLD;
+        if (RomanV4Predicates.IsSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.Subtract;
+        if (RomanV4Predicates.IsIllegalSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.IllegalSubtract;
+        if (RomanV4Predicates.IsResultNotSortedSet(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond, resultIsASortedSetDesc)) return Decision.ResultNotSortedSet;
         return Decision.DefaultUnexpected;
     }
 }

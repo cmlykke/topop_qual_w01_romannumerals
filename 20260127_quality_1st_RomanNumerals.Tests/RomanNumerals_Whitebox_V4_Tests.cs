@@ -27,10 +27,12 @@ public class RomanNumerals_Whitebox_V4_Tests
     {
         var digits = new int?[] { null, 1, 5 };
         var failures = new List<string>();
+        var resultNotSortedSetValues = new[] { true, false };
 
         // repetition matters only for the 1==1 equal case; scan a small but covering range
         for (int repetition = 0; repetition <= 5; repetition++)
         {
+            foreach (var resultNotSortedSet in resultNotSortedSetValues)
             foreach (var a in digits)
             foreach (var b in digits)
             {
@@ -43,10 +45,10 @@ public class RomanNumerals_Whitebox_V4_Tests
                     (a is int && b is null);       // end
                 if (!reachable) continue;
 
-                var decision = RomanConverter.Decide(repetition, a, b, cmp);
+                var decision = RomanConverter.Decide(repetition, a, b, cmp, resultNotSortedSet);
                 if (decision == RomanConverter.Decision.DefaultUnexpected)
                 {
-                    failures.Add($"Unclassified tuple a={a?.ToString() ?? "null"}, b={b?.ToString() ?? "null"}, cmp={cmp}, rep={repetition}");
+                    failures.Add($"Unclassified tuple a={a?.ToString() ?? "null"}, b={b?.ToString() ?? "null"}, cmp={cmp}, rep={repetition}, notSorted={resultNotSortedSet}");
                 }
             }
         }
@@ -61,8 +63,11 @@ public class RomanNumerals_Whitebox_V4_Tests
     {
         var digits = new int?[] { null, 1, 5 };
         var failures = new List<string>();
+        var resultNotSortedSetValues = new[] { true, false };
 
         for (int rep = 0; rep <= 5; rep++)
+            
+        foreach (var resultNotSortedSet in resultNotSortedSetValues)   
         foreach (var a in digits)
         foreach (var b in digits)
         {
@@ -76,14 +81,15 @@ public class RomanNumerals_Whitebox_V4_Tests
 
             var preds = new[]
             {
-                RomanConverter.RomanV4Predicates.IsEnd(rep, a, b, cmp),
-                RomanConverter.RomanV4Predicates.IsFirstIter(rep, a, b, cmp),
-                RomanConverter.RomanV4Predicates.IsLargerPrecedesSmaller(rep, a, b, cmp),
-                RomanConverter.RomanV4Predicates.IsAddRepeat(rep, a, b, cmp),
-                RomanConverter.RomanV4Predicates.IsTooManyRepeats(rep, a, b, cmp),
-                RomanConverter.RomanV4Predicates.IsRepeatVLD(rep, a, b, cmp),
-                RomanConverter.RomanV4Predicates.IsSubtract(rep, a, b, cmp),
-                RomanConverter.RomanV4Predicates.IsIllegalSubtract(rep, a, b, cmp)
+                RomanConverter.RomanV4Predicates.IsEnd(rep, a, b, cmp, resultNotSortedSet),
+                RomanConverter.RomanV4Predicates.IsFirstIter(rep, a, b, cmp, resultNotSortedSet),
+                RomanConverter.RomanV4Predicates.IsLargerPrecedesSmaller(rep, a, b, cmp, resultNotSortedSet),
+                RomanConverter.RomanV4Predicates.IsAddRepeat(rep, a, b, cmp, resultNotSortedSet),
+                RomanConverter.RomanV4Predicates.IsTooManyRepeats(rep, a, b, cmp, resultNotSortedSet),
+                RomanConverter.RomanV4Predicates.IsRepeatVLD(rep, a, b, cmp, resultNotSortedSet),
+                RomanConverter.RomanV4Predicates.IsSubtract(rep, a, b, cmp, resultNotSortedSet),
+                RomanConverter.RomanV4Predicates.IsIllegalSubtract(rep, a, b, cmp, resultNotSortedSet),
+                RomanConverter.RomanV4Predicates.IsResultNotSortedSet(rep, a, b, cmp, resultNotSortedSet)
             };
 
             int count = preds.Count(p => p);
@@ -94,7 +100,7 @@ public class RomanNumerals_Whitebox_V4_Tests
             }
 
             // Verify Decide alignment with the single true predicate
-            var decision = RomanConverter.Decide(rep, a, b, cmp);
+            var decision = RomanConverter.Decide(rep, a, b, cmp, resultNotSortedSet);
             var expectedIndex = Array.FindIndex(preds, p => p);
             var actualIndex = decision switch
             {
@@ -106,6 +112,7 @@ public class RomanNumerals_Whitebox_V4_Tests
                 RomanConverter.Decision.RepeatVLD => 5,
                 RomanConverter.Decision.Subtract => 6,
                 RomanConverter.Decision.IllegalSubtract => 7,
+                RomanConverter.Decision.ResultNotSortedSet => 8,
                 _ => -1
             };
             if (expectedIndex != actualIndex)
@@ -117,7 +124,7 @@ public class RomanNumerals_Whitebox_V4_Tests
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
     }
     
-    // brute-force generator test that ensure that
+    // brute-force generator that tests:
     // the default arm is never hit in the ToInteger helper 
     // (effectively, it does the same as the test ToInteger_DoesNotHit_DefaultArm_On_Reasonable_Lengths,
     // but by using public API (a roman numeral) instead of internals)
