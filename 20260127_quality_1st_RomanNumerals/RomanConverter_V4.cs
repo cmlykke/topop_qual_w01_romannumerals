@@ -120,39 +120,47 @@ public class RomanConverter_V4
 
     // Mirrors the predicates used by the ToIntegerHelper switch.
     // It does not perform any state mutation; it only classifies the current tuple.
+    internal static class RomanV4Predicates
+    {
+        internal static bool IsEnd              (int rep, int? a, int? b, int cmp) => a is int && b is null;
+        internal static bool IsFirstIter        (int rep, int? a, int? b, int cmp) => a is null && b is int;
+        internal static bool IsLargerPrecedesSmaller(int rep, int? a, int? b, int cmp) => a is int && b is int && cmp > 0;
+        internal static bool IsAddRepeat        (int rep, int? a, int? b, int cmp) => rep < 3  && a == 1 && b == 1 && cmp == 0;
+        internal static bool IsTooManyRepeats   (int rep, int? a, int? b, int cmp) => rep >= 3 && a == 1 && b == 1 && cmp == 0;
+        internal static bool IsRepeatVLD        (int rep, int? a, int? b, int cmp) => a == 5 && b == 5 && cmp == 0;
+        internal static bool IsSubtract         (int rep, int? a, int? b, int cmp) => a == 1 && b is int && cmp < 0;
+        internal static bool IsIllegalSubtract  (int rep, int? a, int? b, int cmp) => a == 5 && b is int && cmp < 0;
+    }
+
     internal static Decision Decide(
         int repetition,
         int? firstHeadDigit,
         int? secondHeadDigit,
         int firstGreaterThanSecond)
     {
-        return (repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond) switch
-        {
-            // End
-            (_, int, null, _) => Decision.End,
+        // DEBUG-only overlap guard: ensure mutual exclusivity of predicates
+        #if DEBUG
+        int matches = 0;
+        if (RomanV4Predicates.IsEnd(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (RomanV4Predicates.IsFirstIter(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (RomanV4Predicates.IsLargerPrecedesSmaller(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (RomanV4Predicates.IsAddRepeat(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (RomanV4Predicates.IsTooManyRepeats(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (RomanV4Predicates.IsRepeatVLD(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (RomanV4Predicates.IsSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (RomanV4Predicates.IsIllegalSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) matches++;
+        if (matches > 1)
+            throw new InternalInvariantViolationException("Overlapping decision predicates detected");
+        #endif
 
-            // First iteration
-            (_, null, int, _) => Decision.FirstIter,
-
-            // Larger value precedes smaller
-            (_, int, int, > 0) => Decision.LargerPrecedesSmaller,
-
-            // Equal 1s under repeat limit
-            (< 3, 1, 1, 0) => Decision.AddRepeat,
-
-            // Too many repeats of 1
-            (>= 3, 1, 1, 0) => Decision.TooManyRepeats,
-
-            // V/L/D cannot repeat
-            (_, 5, 5, 0) => Decision.RepeatVLD,
-
-            // Valid subtract (I before V/X/C/M → head 1, sign < 0)
-            (_, 1, int, < 0) => Decision.Subtract,
-
-            // Illegal subtract (V/L/D before larger)
-            (_, 5, int, < 0) => Decision.IllegalSubtract,
-
-            _ => Decision.DefaultUnexpected
-        };
+        if (RomanV4Predicates.IsEnd(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.End;
+        if (RomanV4Predicates.IsFirstIter(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.FirstIter;
+        if (RomanV4Predicates.IsLargerPrecedesSmaller(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.LargerPrecedesSmaller;
+        if (RomanV4Predicates.IsAddRepeat(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.AddRepeat;
+        if (RomanV4Predicates.IsTooManyRepeats(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.TooManyRepeats;
+        if (RomanV4Predicates.IsRepeatVLD(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.RepeatVLD;
+        if (RomanV4Predicates.IsSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.Subtract;
+        if (RomanV4Predicates.IsIllegalSubtract(repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond)) return Decision.IllegalSubtract;
+        return Decision.DefaultUnexpected;
     }
 }
