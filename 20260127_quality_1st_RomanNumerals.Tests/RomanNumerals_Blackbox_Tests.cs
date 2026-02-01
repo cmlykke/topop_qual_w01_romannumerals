@@ -3,48 +3,11 @@
 using Xunit;
 using System.Collections.Generic;
 
-public class RomanNumeralsTests
+// this class is for black-box behavioral testing
+public class RomanNumerals_Blackbox_Tests
 {
  
     private static Func<string, int> GenericRomanToInt = RomanConverter_V3.ToInteger;
-    private static int bruteForceGenerator_maxLength = 5;
-    static readonly char[] bruteForceGeneratorAlphabet = { 'I', 'V', 'X', 'L', 'C', 'D', 'M' };
-    
-    // brute-force generator test
-
-    [Fact]
-    public void ToInteger_DoesNotHit_DefaultArm_On_Reasonable_Lengths()
-    {
-        var samples = GenerateSamples(bruteForceGenerator_maxLength);
-        foreach (var s in samples)
-        {
-            try
-            {
-                _ = GenericRomanToInt(s);
-            }
-            catch (ArgumentException ex) when (ex.Message.Contains("case should never be reached"))
-            {
-                Assert.Fail($"Default arm hit for input '{s}'");
-            }
-            catch (ArgumentException)
-            {
-                // Expected for invalid strings (e.g., VV, LL, DM, bad subtractives, etc.). Ignore.
-            }
-        }
-    }
-
-    private static IEnumerable<string> GenerateSamples(int maxLen)
-    {
-        var list = new List<string>();
-        void Gen(string prefix, int len)
-        {
-            if (len == 0) { list.Add(prefix); return; }
-            foreach (var c in bruteForceGeneratorAlphabet)
-                Gen(prefix + c, len - 1);
-        }
-        for (int l = 1; l <= maxLen; l++) Gen(string.Empty, l);
-        return list;
-    }
     
     //Non-roman input tests:
     [Theory]

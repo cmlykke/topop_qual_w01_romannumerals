@@ -91,6 +91,58 @@ public class RomanConverter_V3
             "case should never be reached, please report this bug"),
         };
     }
+    
+    // Internal decision surface for tests only
+    internal enum Decision
+    {
+        End,
+        FirstIter,
+        LargerPrecedesSmaller,
+        AddRepeat,
+        TooManyRepeats,
+        RepeatVLD,
+        Subtract,
+        IllegalSubtract,
+        DefaultUnexpected
+    }
+
+    // Mirrors the predicates used by the ToIntegerHelper switch.
+    // It does not perform any state mutation; it only classifies the current tuple.
+    internal static Decision Decide(
+        int repetition,
+        int? firstHeadDigit,
+        int? secondHeadDigit,
+        int firstGreaterThanSecond)
+    {
+        return (repetition, firstHeadDigit, secondHeadDigit, firstGreaterThanSecond) switch
+        {
+            // End
+            (_, int, null, _) => Decision.End,
+
+            // First iteration
+            (_, null, int, _) => Decision.FirstIter,
+
+            // Larger value precedes smaller
+            (_, int, int, > 0) => Decision.LargerPrecedesSmaller,
+
+            // Equal 1s under repeat limit
+            (< 3, 1, 1, 0) => Decision.AddRepeat,
+
+            // Too many repeats of 1
+            (>= 3, 1, 1, 0) => Decision.TooManyRepeats,
+
+            // V/L/D cannot repeat
+            (_, 5, 5, 0) => Decision.RepeatVLD,
+
+            // Valid subtract (I before V/X/C/M → head 1, sign < 0)
+            (_, 1, int, < 0) => Decision.Subtract,
+
+            // Illegal subtract (V/L/D before larger)
+            (_, 5, int, < 0) => Decision.IllegalSubtract,
+
+            _ => Decision.DefaultUnexpected
+        };
+    }
 }
 
 
